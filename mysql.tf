@@ -1,6 +1,5 @@
 provider "azurerm" {
   features {}
-  subscription_id = data.azurerm_subscription.current.id
 }
 data "azurerm_subscription" "current" {}  // read the current subscription info
 
@@ -156,15 +155,14 @@ resource "azurerm_mssql_database" "sqldb" {
   }
   
   name           = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", each.value, "-sqldb-", random_id.randomnumber.hex]) 
-  server_id      = azurerm_mssql_server.mssqlserver[each.key].id
+  server_id      = azurerm_mssql_server.mssqlserver.id
   collation      = var.collation//"SQL_Latin1_General_CP1_CI_AS"
   license_type   = "LicenseIncluded"
   # max_size_gb    = 4
   # read_scale     = true
   sku_name       = var.skuname
   zone_redundant = var.zoneredundancy
-  
-  depends_on = [azurerm_mssql_server.mssqlserver]
+depends_on = [ azurerm_mssql_server.mssqlserver ]
 }
 
 
