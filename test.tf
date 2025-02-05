@@ -32,12 +32,8 @@ variable "location" {
 
 variable "purpose" {
   type = string
-  description = "purpose"
-  default = "test"
-  # validation {
-  #   condition = var.purpose==""
-  #   error_message = "purpose cannot be empty"
-  # }
+  description = "purpose/sequence (format: purpose/sequence, e.g. test/01)"
+  default = "test/01"
 }
 
 variable "db_purpose" {
@@ -45,12 +41,6 @@ variable "db_purpose" {
   description = "purpose"
   default = ["histroy", "userinterface", "events"]
 }
-
-variable "sequence" {
-  type = string
-  description = "sequence"
-  default = "01" 
-  }
 
 variable "resourcegroup" {
     type = string
