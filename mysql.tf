@@ -6,20 +6,24 @@ data "azurerm_subscription" "current" {}  // read the current subscription info
 data "azurerm_client_config" "clientconfig" {} // read the current client config
 
 locals {
-  get_data= csvdecode(file("../parameters.csv"))
- // define data for naming standards 
- naming = {
-   bu = lower(split("-", data.azurerm_subscription.current.display_name)[1])  // read app/bu from the subscription data block
-   environment = lower(split("-", data.azurerm_subscription.current.display_name)[2])  // read environment from subscription data block
-   locations = var.location
-   nn                       = lower(split("-", data.azurerm_subscription.current.display_name)[3])
-   subscription_name        = data.azurerm_subscription.current.display_name
-   subscription_id          = data.azurerm_subscription.current.id
- }
- env_location = {
+  get_data = csvdecode(file("../parameters.csv"))
+  // Split the purpose input into purpose and sequence
+  purpose_parts = split("/", var.purpose)
+  purpose = length(local.purpose_parts) > 0 ? local.purpose_parts[0] : "default"
+  sequence = length(local.purpose_parts) > 1 ? local.purpose_parts[1] : "01"
+  
+  naming = {
+    bu = lower(split("-", data.azurerm_subscription.current.display_name)[1])  // read app/bu from the subscription data block
+    environment = lower(split("-", data.azurerm_subscription.current.display_name)[2])  // read environment from subscription data block
+    locations = var.location
+    nn                       = lower(split("-", data.azurerm_subscription.current.display_name)[3])
+    subscription_name        = data.azurerm_subscription.current.display_name
+    subscription_id          = data.azurerm_subscription.current.id
+  }
+  env_location = {
     env_abbreviation       = var.environment_map[local.naming.environment]
     locations_abbreviation = var.location_map[local.naming.locations]
-      }
+  }
   # vnet_name = {
   #   for index, inst in local.get_data : index => inst {
   #     vnet_name = (lookup(inst, "vnet_name", null) != null && lookup(inst, "vnet_name", "") != "") ? inst.vnet_name : join("-", [local.naming.bu, local.naming.environment, local.naming_map.location_abbreviation[unique_id].location_abbreviation, "vnet", local.naming.nn])
@@ -27,8 +31,6 @@ locals {
   #   }
 
   # }
- purpose = var.RGname!="" ? lower(split("-",var.RGname)[3]) : var.purpose
-# subnet = var.subnet
 }
 
 data "azurerm_resource_group" "rg" {
@@ -68,7 +70,7 @@ output "subnet_id" {
 resource "azurerm_mssql_server" "mssqlserver" {
   for_each = { for inst in local.get_data : inst.unique_id => inst }
    //<bu>-<env>-<region>-<purpose>-sql-<nn>
-  name                         = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", local.purpose, "-sql-",random_id.randomnumber.hex]) 
+  name                         = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", local.purpose, "-sql-", local.sequence]) 
   resource_group_name          =  (lookup(each.value,"RGname",null) != null && lookup(each.value,"RGname","") != "" && var.RGname!="") ? each.value.RGname : data.azurerm_resource_group.rg[each.key].name
   location                     =  var.location
   version                      =  var.dbserverversion
@@ -154,7 +156,7 @@ resource "azurerm_mssql_database" "sqldb" {
     for idx, purpose in var.db_purpose : "${idx}" => purpose
   }
   
-  name           = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", each.value, "-sqldb-", random_id.randomnumber.hex]) 
+  name           = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", each.value, "-sqldb-", local.sequence]) 
   server_id      = values(azurerm_mssql_server.mssqlserver)[0].id
   collation      = var.collation//"SQL_Latin1_General_CP1_CI_AS"
   license_type   = "LicenseIncluded"
@@ -211,17 +213,17 @@ depends_on = [ azurerm_mssql_server.mssqlserver ]
 # }
 
 
-# ****************************** Create Private End point ********************
+//***************************** Create Private End point ********************
 
 resource "azurerm_private_endpoint" "privateendpoint" {
   for_each = { for inst in local.get_data : inst.unique_id => inst }
-  name                = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", local.purpose, "-sql-",random_id.randomnumber.hex,"-PE"]) 
+  name                = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", local.purpose, "-sql-", local.sequence, "-PE"]) 
   location            = data.azurerm_resource_group.rg[each.key].location
   resource_group_name = (lookup(each.value,"RGname",null) != null && lookup(each.value,"RGname","") != "" && var.RGname!="") ? each.value.RGname : data.azurerm_resource_group.rg[each.key].name
   subnet_id           = data.azurerm_subnet.subnet[each.key].id
 
   private_service_connection {
-    name                           = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", local.purpose, "-sql-",random_id.randomnumber.hex,"-PSconnection"]) 
+    name                           = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", local.purpose, "-sql-", local.sequence, "-PSconnection"]) 
     private_connection_resource_id = azurerm_mssql_server.mssqlserver[each.key].id
     subresource_names              = ["sqlServer"]
     is_manual_connection           = false
