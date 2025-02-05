@@ -155,7 +155,7 @@ resource "azurerm_mssql_database" "sqldb" {
   }
   
   name           = join("", [local.naming.bu, "-", local.naming.environment, "-", local.env_location.locations_abbreviation, "-", each.value, "-sqldb-", random_id.randomnumber.hex]) 
-  server_id      = azurerm_mssql_server.mssqlserver.id
+  server_id      = values(azurerm_mssql_server.mssqlserver)[0].id
   collation      = var.collation//"SQL_Latin1_General_CP1_CI_AS"
   license_type   = "LicenseIncluded"
   # max_size_gb    = 4
