@@ -146,3 +146,8 @@ jobs:
       dbcollation: '${{inputs.dbcollation}}'
       skuname: '${{inputs.skuname}}'
       zoneredundancy: '${{inputs.zoneredundancy}}'
+
+
+
+Invalid workflow file: .github/workflows/mysql_server.yml#L82
+The workflow is not valid. .github/workflows/mysql_server.yml (Line: 82, Col: 17): Unrecognized function: 'split'. Located at position 1 within expression: split(inputs.location_pair, ",")[0] .github/workflows/mysql_server.yml (Line: 98, Col: 17): Unrecognized function: 'split'. Located at position 1 within expression: split(inputs.location_pair, ",")[0]
