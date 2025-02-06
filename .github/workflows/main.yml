@@ -68,21 +68,21 @@ on:
             - "false"
             - "true"
 jobs:
-  resource-group:
-    if: (github.event.inputs.requestType == 'Create (with New RG)')
-    name: 'Deploying - resource-group'
-    uses: ./.github/workflows/CreateResourceGroup.yml
-    secrets:
-      ARM_CLIENT_ID: ${{secrets.AZURE_CLIENT_ID}}
-      ARM_CLIENT_SECRET: ${{secrets.AZURE_CLIENT_SECRET}}
-      ARM_SUBSCRIPTION_ID: ${{secrets.AZURE_SUBSCRIPTION_ID}}
-      ARM_TENANT_ID: ${{secrets.AZURE_TENANT_ID}}
-    with:
-      name: 'resource-group'
-      subscription: '${{inputs.subscription}}'
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      environment: '${{inputs.environment}}'
-      purpose: '${{inputs.purposeRG}}'
+  # resource-group:
+  #   if: (github.event.inputs.requestType == 'Create (with New RG)')
+  #   name: 'Deploying - resource-group'
+  #   uses: ./.github/workflows/CreateResourceGroup.yml
+  #   secrets:
+  #     ARM_CLIENT_ID: ${{secrets.AZURE_CLIENT_ID}}
+  #     ARM_CLIENT_SECRET: ${{secrets.AZURE_CLIENT_SECRET}}
+  #     ARM_SUBSCRIPTION_ID: ${{secrets.AZURE_SUBSCRIPTION_ID}}
+  #     ARM_TENANT_ID: ${{secrets.AZURE_TENANT_ID}}
+  #   with:
+  #     name: 'resource-group'
+  #     subscription: '${{inputs.subscription}}'
+  #     location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
+  #     environment: '${{inputs.environment}}'
+  #     purpose: '${{inputs.purposeRG}}'
   mysql-server_new_rg:
     if: (github.event.inputs.requestType == 'Create (with New RG)')
     name: 'Deploying - MSSQL server'
