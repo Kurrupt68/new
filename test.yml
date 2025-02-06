@@ -78,7 +78,7 @@ jobs:
     with:
       name: "resource-group"
       subscription: "${{inputs.subscription}}"
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
+      location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'eastus2' : 'centralus' }}"
       environment: "${{inputs.environment}}"
       purpose: "${{inputs.purposeRG}}"
   mysql-server_new_rg:
@@ -94,8 +94,8 @@ jobs:
     with:
       name: "mssql"
       subscription: "${{inputs.subscription}}"
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      secondary_location: '${{ contains(inputs.location_pair, "eastus2-") ? "centralus" : "eastus2" }}'
+      location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'eastus2' : 'centralus' }}"
+      secondary_location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'centralus' : 'eastus2' }}"
       purposeRG: "${{inputs.purposeRG}}"
       environment: "${{inputs.environment}}"
       purpose: "${{inputs.purpose}}"
@@ -116,8 +116,8 @@ jobs:
       name: "mssql"
       subscription: "${{inputs.subscription}}"
       purposeRG: "${{inputs.purposeRG}}"
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      secondary_location: '${{ contains(inputs.location_pair, "eastus2-") ? "centralus" : "eastus2" }}'
+      location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'eastus2' : 'centralus' }}"
+      secondary_location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'centralus' : 'eastus2' }}"
       environment: "${{inputs.environment}}"
       purpose: "${{inputs.purpose}}"
       subnetname: "${{inputs.subnetname}}"
@@ -136,8 +136,8 @@ jobs:
     with:
       name: "mssql"
       subscription: "${{inputs.subscription}}"
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      secondary_location: '${{ contains(inputs.location_pair, "eastus2-") ? "centralus" : "eastus2" }}'
+      location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'eastus2' : 'centralus' }}"
+      secondary_location: "${{ contains(inputs.location_pair, 'eastus2-') ? 'centralus' : 'eastus2' }}"
       environment: "${{inputs.environment}}"
       purpose: "${{inputs.purpose}}"
       purposeRG: "${{inputs.purposeRG}}"
