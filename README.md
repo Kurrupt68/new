@@ -1,1 +1,2 @@
-# new
+Invalid workflow file: .github/workflows/mysql_server.yml#L82
+The workflow is not valid. .github/workflows/mysql_server.yml (Line: 82, Col: 17): Unexpected symbol: '"eastus2-"'. Located at position 32 within expression: contains(inputs.location_pair, "eastus2-") && "eastus2" || "centralus" .github/workflows/mysql_server.yml (Line: 98, Col: 17): Unexpected symbol: '"eastus2-"'. Located at position 32 within expression: contains(inputs.location_pair, "eastus2-") && "eastus2" || "centralus"
