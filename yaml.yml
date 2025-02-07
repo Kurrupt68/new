@@ -1,32 +1,31 @@
 name: 'Deploy MSSQL Server'
-run-name: '${{github.actor}} - Deployingto_${{inputs.subscription}}_${{inputs.environment}}'
-
+run-name: '${{ github.actor }} - Deployingto_${{ github.event.inputs.subscription }}_${{ github.event.inputs.environment }}'
 on:
   workflow_dispatch:
     inputs:
       requesttype:
         type: choice
+        description: "Request Type"
         required: true
-        description: Request Type
         options:
-          - Create (with New RG)
-          - Create (with Existing RG)
-          - Remove
+          - "Create (with New RG)"
+          - "Create (with Existing RG)"
+          - "Remove"
         default: "Create (with New RG)"
       subscription:
         type: string
+        description: "Please enter your subscription Name"
         required: true
-        description: Please enter your subcription Name
       location_pair:
         type: choice
-        description: Select Primary-Secondary Location Pair
+        description: "Choose a JSON array of two Azure regions (first = primary, second = secondary)."
         required: true
         options:
-          - "eastus2-centralus"
-          - "centralus-eastus2"
+          - '["eastus2","centralus"]'
+          - '["centralus","eastus2"]'
       environment:
         type: choice
-        description: choose the environment
+        description: "Choose the environment"
         options:
           - dev
           - qa
@@ -34,24 +33,24 @@ on:
           - Prod
       purposeRG:
         type: string
+        description: "Resource Group Purpose.......... Hyphen designate an existing RG"
         required: true
-        description: Resource Group Purpose.......... Hyphen designate an existing RG
       purpose:
         type: string
-        description: purpose/sequence
+        description: "purpose/sequence"
         required: true
       subnetname:
         type: string
+        description: "Enter the subnet name for db endpoints"
         required: true
-        description: Enter the subnet name for db end points
       dbcollation:
         type: string
+        description: "Specify Collation of the database"
         required: false
-        description: Specify Collation of the database
         default: SQL_Latin1_General_CP1_CI_AS
       skuname:
         type: choice
-        description: select SKU_NAME used by Database
+        description: "Select SKU_NAME used by Database"
         options:
           - S0
           - P2
@@ -64,88 +63,69 @@ on:
           - DS100
       zoneredundancy:
         type: choice
+        description: "Zone Redundancy"
+        required: true
         options:
           - "false"
           - "true"
 
 jobs:
-  resource-group:
-    if: (github.event.inputs.requestType == 'Create (with New RG)')
-    name: 'Deploying - resource-group'
-    uses: ./.github/workflows/CreateResourceGroup.yml
-    secrets:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-    with:
-      name: 'resource-group'
-      subscription: '${{ inputs.subscription }}'
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      environment: '${{ inputs.environment }}'
-      purpose: '${{ inputs.purposeRG }}'
-
   mysql-server_new_rg:
-    if: (github.event.inputs.requestType == 'Create (with New RG)')
-    name: 'Deploying - MSSQL server'
-    uses: ./.github/workflows/Createmssqlserver.yml
-    needs: resource-group
-    secrets:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-    with:
-      name: 'mssql'
-      subscription: '${{ inputs.subscription }}'
-      location: '${{ startsWith(inputs.location_pair, "eastus2") ? "eastus2" : "centralus" }}'
-      secondary_location: '${{ startsWith(inputs.location_pair, "eastus2") ? "centralus" : "eastus2" }}'
-      purposeRG: '${{ inputs.purposeRG }}'
-      environment: '${{ inputs.environment }}'
-      purpose: '${{ inputs.purpose }}'
-      subnetname: '${{ inputs.subnetname }}'
-      dbcollation: '${{ inputs.dbcollation }}'
-      skuname: '${{ inputs.skuname }}'
-      zoneredundancy: '${{ inputs.zoneredundancy }}'
+    if: ${{ github.event.inputs.requesttype == 'Create (with New RG)' }}
+    name: 'Deploying - MSSQL server (New RG)'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy MSSQL Server
+        uses: ./.github/workflows/Createmssqlserver.yml
+        with:
+          name: 'mssql'
+          subscription: '${{ github.event.inputs.subscription }}'
+          location: '${{ fromJson(github.event.inputs.location_pair)[0] }}'
+          secondary_location: '${{ fromJson(github.event.inputs.location_pair)[1] }}'
+          purposeRG: '${{ github.event.inputs.purposeRG }}'
+          environment: '${{ github.event.inputs.environment }}'
+          purpose: '${{ github.event.inputs.purpose }}'
+          subnetname: '${{ github.event.inputs.subnetname }}'
+          dbcollation: '${{ github.event.inputs.dbcollation }}'
+          skuname: '${{ github.event.inputs.skuname }}'
+          zoneredundancy: '${{ github.event.inputs.zoneredundancy }}'
 
   mysql-server_existing_rg:
-    if: (github.event.inputs.requestType == 'Create (with Existing RG)')
-    name: 'Deploying - MSSQL server'
-    uses: ./.github/workflows/Createmssqlserver.yml
-    secrets:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-    with:
-      name: 'mssql'
-      subscription: '${{ inputs.subscription }}'
-      purposeRG: '${{ inputs.purposeRG }}'
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      environment: '${{ inputs.environment }}'
-      purpose: '${{ inputs.purpose }}'
-      subnetname: '${{ inputs.subnetname }}'
-      dbcollation: '${{ inputs.dbcollation }}'
-      skuname: '${{ inputs.skuname }}'
-      zoneredundancy: '${{ inputs.zoneredundancy }}'
+    if: ${{ github.event.inputs.requesttype == 'Create (with Existing RG)' }}
+    name: 'Deploying - MSSQL server (Existing RG)'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy MSSQL Server
+        uses: ./.github/workflows/Createmssqlserver.yml
+        with:
+          name: 'mssql'
+          subscription: '${{ github.event.inputs.subscription }}'
+          location: '${{ fromJson(github.event.inputs.location_pair)[0] }}'
+          secondary_location: '${{ fromJson(github.event.inputs.location_pair)[1] }}'
+          purposeRG: '${{ github.event.inputs.purposeRG }}'
+          environment: '${{ github.event.inputs.environment }}'
+          purpose: '${{ github.event.inputs.purpose }}'
+          subnetname: '${{ github.event.inputs.subnetname }}'
+          dbcollation: '${{ github.event.inputs.dbcollation }}'
+          skuname: '${{ github.event.inputs.skuname }}'
+          zoneredundancy: '${{ github.event.inputs.zoneredundancy }}'
 
   mysql-server_remove:
-    if: (github.event.inputs.requestType == 'Remove')
-    name: 'Deploying - MSSQL server'
-    uses: ./.github/workflows/Createmssqlserver.yml
-    secrets:
-      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-    with:
-      name: 'mssql'
-      subscription: '${{ inputs.subscription }}'
-      location: '${{ contains(inputs.location_pair, "eastus2-") ? "eastus2" : "centralus" }}'
-      environment: '${{ inputs.environment }}'
-      purpose: '${{ inputs.purpose }}'
-      purposeRG: '${{ inputs.purposeRG }}'
-      subnetname: '${{ inputs.subnetname }}'
-      dbcollation: '${{ inputs.dbcollation }}'
-      skuname: '${{ inputs.skuname }}'
-      zoneredundancy: '${{ inputs.zoneredundancy }}'
+    if: ${{ github.event.inputs.requesttype == 'Remove' }}
+    name: 'Removing - MSSQL server'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove MSSQL Server
+        uses: ./.github/workflows/Createmssqlserver.yml
+        with:
+          name: 'mssql'
+          subscription: '${{ github.event.inputs.subscription }}'
+          location: '${{ fromJson(github.event.inputs.location_pair)[0] }}'
+          secondary_location: '${{ fromJson(github.event.inputs.location_pair)[1] }}'
+          purposeRG: '${{ github.event.inputs.purposeRG }}'
+          environment: '${{ github.event.inputs.environment }}'
+          purpose: '${{ github.event.inputs.purpose }}'
+          subnetname: '${{ github.event.inputs.subnetname }}'
+          dbcollation: '${{ github.event.inputs.dbcollation }}'
+          skuname: '${{ github.event.inputs.skuname }}'
+          zoneredundancy: '${{ github.event.inputs.zoneredundancy }}'
